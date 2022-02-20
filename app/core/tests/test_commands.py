@@ -4,16 +4,21 @@ from django.db.utils import OperationalError
 
 def test_wait_for_db_ready(mocker):
     """Test waiting for db when db is available"""
-    gi = mocker.patch("django.db.utils.ConnectionHandler.__getitem__")
-    gi.return_value = True
+    ec = mocker.patch(
+        "django.db.backends.base.base.BaseDatabaseWrapper.ensure_connection",
+        return_value=None,
+    )
     call_command("wait_for_db")
-    assert gi.call_count == 1
+    assert ec.call_count == 1
 
 
 def test_wait_for_db(mocker):
     """Test waiting for db"""
     mocker.patch("time.sleep", return_value=True)
-    gi = mocker.patch("django.db.utils.ConnectionHandler.__getitem__")
-    gi.side_effect = [OperationalError] * 5 + [True]
+    ec = mocker.patch(
+        "django.db.backends.base.base.BaseDatabaseWrapper.ensure_connection",
+        return_value=None,
+    )
+    ec.side_effect = [OperationalError] * 5 + [True]
     call_command("wait_for_db")
-    assert gi.call_count == 6
+    assert ec.call_count == 6
